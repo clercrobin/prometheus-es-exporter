@@ -42,13 +42,14 @@ def format_label_value(value_list):
 
 
 def format_metric_name(name_list):
+    if '2' in name_list:
+        name_list.remove('2')
     metric = '_'.join(name_list)
     metric = re.sub(metric_invalid_chars, '_', metric)
     metric = re.sub(metric_invalid_start_chars, '_', metric)
     return metric
 
-
-def group_metrics(metrics):
+def group_metrics_2(metrics):
     metric_dict = {}
     for (name_list, label_dict, value) in metrics:
         metric_name = format_metric_name(name_list)
@@ -66,6 +67,37 @@ def group_metrics(metrics):
 
     return metric_dict
 
+def group_metrics(metrics):
+    metric_dict = {}
+    for (name_list, label_dict, value) in metrics:
+        metric_name = format_metric_name(name_list)
+        label_dict = OrderedDict([(format_label_key(k), format_label_value(v))
+                                  for k, v in label_dict.items()])
+
+        if '_' in label_dict:
+            labels = label_dict['_'].split('}{')
+            label_keys = []
+            label_values = []
+            for label in labels:
+                key_value = label.split(':')
+                label_keys.append(key_value[0])
+                label_values.append(key_value[1])
+
+            if metric_name not in metric_dict:
+                metric_dict[metric_name] = (tuple(label_keys), {})
+
+            label_values = tuple(label_values)
+
+        else:
+
+            if metric_name not in metric_dict:
+                metric_dict[metric_name] = (tuple(label_dict.keys()), {})
+            label_keys = metric_dict[metric_name][0]
+            label_values = tuple([label_dict[key]
+                                  for key in label_keys])
+        metric_dict[metric_name][1][label_values] = value
+
+    return metric_dict
 
 def update_gauges(metrics):
     metric_dict = group_metrics(metrics)

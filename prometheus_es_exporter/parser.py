@@ -53,27 +53,55 @@ def parse_buckets_fixed(agg_key, buckets, metric=None, labels=None):
 
 
 def parse_agg(agg_key, agg, metric=None, labels=None):
+    f=open("/var/tmp/prometheus_insight.txt", "a+")
+    print("Beginning of parseagg", file=f)
     if metric is None:
         metric = []
     if labels is None:
         labels = OrderedDict()
 
     result = []
+    if agg_key:
+        print("agg_key", file=f)
+        print(agg_key, file=f)
+    if agg:
+        print("agg", file=f)
+        print(agg, file=f)
+    if metric:
+        print("metric", file=f)
+        print(metric, file=f)
+    if labels:
+        print("labels", file=f)
+        print(labels, file=f)
 
     for key, value in agg.items():
+        print("\n", file=f)
+        print(key, file=f)
+        print("\n", file=f)
+        print(value, file=f)
         if key == 'buckets' and isinstance(value, list):
+            print("inlistbucket", file=f)
             result.extend(parse_buckets(agg_key, value, metric=metric, labels=labels))
         elif key == 'buckets' and isinstance(value, dict):
+            print("indictbucket", file=f)
             result.extend(parse_buckets_fixed(agg_key, value, metric=metric, labels=labels))
         elif isinstance(value, dict):
+            print("indict", file=f)
             result.extend(parse_agg(key, value, metric=metric + [key], labels=labels))
         else:
+            print("else", file=f)
             result.append((metric + [key], labels, value))
-
+    print("End of parseagg", file=f)
+    f.close()
     return result
 
 
 def parse_response(response, metric=None):
+    f=open("/var/tmp/prometheus_insight.txt", "a+")
+    print("Repsponse and metrics", file=f)
+    print(response, file=f)
+    print(metric, file = f)
+    print("Beginning of the new response", file=f)
     if metric is None:
         metric = []
 
@@ -85,6 +113,9 @@ def parse_response(response, metric=None):
 
         if 'aggregations' in response.keys():
             for key, value in response['aggregations'].items():
+                print(key, file=f)
+                print(value, file=f)
                 result.extend(parse_agg(key, value, metric=metric + [key]))
-
+    print("End of the response", file=f)
+    f.close()
     return result
